@@ -3,6 +3,12 @@ import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import { TokenModel } from '../../domain/entities/Token.js';
+import dotenv from 'dotenv';
+dotenv.config();
+
+console.log('A_GMAIL_USER:', process.env.USER);
+console.log('A_GMAIL_PASS:', process.env.PASS ? 'SET' : 'NOT SET');
+
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -10,8 +16,8 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: {
-    user: 'vvalanoir@gmail.com',
-    pass: 'ntvq vfri urgj xwys'
+    user: process.env.USER,
+    pass: process.env.PASS
   }
 });
 
@@ -19,7 +25,7 @@ async function sendVerificationEmail(email, url) {
   console.log('[VERIFICATION URL]', url);
   try {
     const info = await transporter.sendMail({
-      from: 'vvalanoir@gmail.com',
+      from: process.env.USER,
       to: email,
       subject: 'Verify your email',
       text: `Click here to verify your mail\n${url}`
