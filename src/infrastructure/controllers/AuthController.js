@@ -53,7 +53,7 @@ export function AuthController(userRepository) {
         const user = await userRepository.createUser(email, username, hashed, bio, false); // verified: false
         const token = crypto.randomBytes(32).toString('hex');
         await userRepository.createToken(user._id, token);
-        const url = `${process.env.SERVER_URL || 'http://localhost:5000'}/api/verify/${user._id}/${token}`;
+        const url = `${process.env.SERVER_URL || 'https://wave-backend-uki2.onrender.com'}/api/verify/${user._id}/${token}`;
         await sendVerificationEmail(email, url);
         res.json({ message: 'Registration successful. Please check your email to verify your account.' });
       } catch (e) {
