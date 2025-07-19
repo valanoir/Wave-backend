@@ -44,20 +44,32 @@ export function AuthController(userRepository) {
       try {
         console.log('[REGISTER REQUEST]', req.body);
         const { email, username, password, bio } = req.body;
-        if (!email || !username || !password) return res.status(400).json({ message: 'Email, username, and password required' });
+        if (!email || !username || !password) {
+          console.log('[REGISTER RESPONSE]', { status: 400, message: 'Email, username, and password required' });
+          return res.status(400).json({ message: 'Email, username, and password required' });
+        }
         const existing = await userRepository.findByEmail(email);
-        if (existing) return res.status(400).json({ message: 'Email already registered' });
+        if (existing) {
+          console.log('[REGISTER RESPONSE]', { status: 400, message: 'Email already registered' });
+          return res.status(400).json({ message: 'Email already registered' });
+        }
         const existingUsername = await userRepository.findByUsername(username);
-        if (existingUsername) return res.status(400).json({ message: 'Username already taken' });
+        if (existingUsername) {
+          console.log('[REGISTER RESPONSE]', { status: 400, message: 'Username already taken' });
+          return res.status(400).json({ message: 'Username already taken' });
+        }
         const hashed = await bcrypt.hash(password, 10);
         const user = await userRepository.createUser(email, username, hashed, bio, false); // verified: false
         const token = crypto.randomBytes(32).toString('hex');
         await userRepository.createToken(user._id, token);
         const url = `${process.env.SERVER_URL || 'https://wave-backend-uki2.onrender.com'}/api/verify/${user._id}/${token}`;
         await sendVerificationEmail(email, url);
-        res.json({ message: 'Registration successful. Please check your email to verify your account.' });
+        const response = { message: 'Registration successful. Please check your email to verify your account.' };
+        console.log('[REGISTER RESPONSE]', { status: 200, response });
+        res.json(response);
       } catch (e) {
         console.log('[REGISTER ERROR]', e);
+        console.log('[REGISTER RESPONSE]', { status: 400, message: e.message });
         res.status(400).json({ message: e.message });
       }
     },
@@ -82,18 +94,31 @@ export function AuthController(userRepository) {
       try {
         console.log('[LOGIN REQUEST]', req.body);
         const { email, password } = req.body;
-        if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
+        if (!email || !password) {
+          console.log('[LOGIN RESPONSE]', { status: 400, message: 'Email and password required' });
+          return res.status(400).json({ message: 'Email and password required' });
+        }
         const user = await userRepository.findByEmail(email);
-        if (!user) return res.status(400).json({ message: 'User not found' });
-        if (!user.verified) return res.status(400).json({ message: 'Email not verified. Please check your email.' });
+        if (!user) {
+          console.log('[LOGIN RESPONSE]', { status: 400, message: 'User not found' });
+          return res.status(400).json({ message: 'User not found' });
+        }
+        if (!user.verified) {
+          console.log('[LOGIN RESPONSE]', { status: 400, message: 'Email not verified. Please check your email.' });
+          return res.status(400).json({ message: 'Email not verified. Please check your email.' });
+        }
         const match = await bcrypt.compare(password, user.password);
-        if (!match) return res.status(400).json({ message: 'Invalid password' });
+        if (!match) {
+          console.log('[LOGIN RESPONSE]', { status: 400, message: 'Invalid password' });
+          return res.status(400).json({ message: 'Invalid password' });
+        }
         const token = jwt.sign({ id: user._id, email: user.email, username: user.username }, process.env.JWT_SECRET, { expiresIn: '7d' });
         const result = { id: user._id, email: user.email, username: user.username, bio: user.bio, isGuest: false, token };
-        console.log('[LOGIN RESPONSE]', result);
+        console.log('[LOGIN RESPONSE]', { status: 200, result });
         res.json(result);
       } catch (e) {
         console.log('[LOGIN ERROR]', e);
+        console.log('[LOGIN RESPONSE]', { status: 400, message: e.message });
         res.status(400).json({ message: e.message });
       }
     },
